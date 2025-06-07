@@ -1,8 +1,13 @@
 # Ignore embedded Git repositories
 Databricks_Notebooks/.git/
 
+# Databricks specific
+**/.databricks/
+**/*.pyc
+**/__pycache__/
+**/.DS_Store
+
 # Common ignores
-__pycache__/
 *.py[cod]
 *$py.class
 *.so
