@@ -1,0 +1,58 @@
+# Sample pipeline that grabs a model from MLFlow, creates a Docker image and uploads it to Azure Container Registry
+
+# These parameters are set by the MLFlow webhook that calls this pipeline
+parameters:
+- name: run_id
+  type: string
+- name: model_version
+  type: string
+- name: databricks_host
+  type: string
+- name: databricks_token
+  type: string
+
+trigger: none
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+
+- script: echo Parameters sent to pipeline ${{ parameters.run_id }} and ${{ parameters.model_version }}
+  displayName: 'Display parameters'
+  
+- task: DockerInstaller@0
+  inputs:
+    dockerVersion: '17.09.0-ce'
+
+- script: pip install mlflow
+  displayName: 'Installing dependencies'
+  enabled: 'true'
+
+- script: |
+    export MLFLOW_TRACKING_URI=databricks
+    export DATABRICKS_HOST=${{ parameters.databricks_host }}
+    export DATABRICKS_TOKEN=${{ parameters.databricks_token }}
+    mlflow artifacts download -r "${{ parameters.run_id }}" -d "model_dir"
+    ls -la
+  displayName: 'Configure MLFlow environmental variables'
+  enabled: 'true'
+
+- script: |
+    mlflow models generate-dockerfile -m "model_dir/model/" -d "mlflow_docker" --enable-mlserver
+  displayName: 'Create Dockerfile'
+  enabled: 'true'
+
+- script: |
+    docker build -t "solacc.azurecr.io/ml-model:v.${{ parameters.model_version }}" mlflow_docker/
+  displayName: 'Create Docker Image'
+  enabled: 'true'
+
+- task: Docker@2
+  displayName: 'Push Docker Image to ACR'
+  inputs:
+    containerRegistry: 'solacc_acr'
+    repository: 'ml-model'
+    command: 'push'
+    tags: 'v.${{ parameters.model_version }}'
+    

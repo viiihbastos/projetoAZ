@@ -1,0 +1,4 @@
+beautifulsoup4==4.12.3
+nltk==3.8.1
+spacy==3.7.4
+wordcloud==1.9.3

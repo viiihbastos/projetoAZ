@@ -1,0 +1,10 @@
+**/**/*.pyc
+**/**/*pycache*
+/*venv
+.vscode/
+.idea/
+.DS_Store
+dist
+*.egg-info
+build
+site
